@@ -1,12 +1,12 @@
 #
 # Copyright (c) 2023-2026 SMALLPROGRAM & Gemini-Extreme-Optimizer
-# Description: 专门为 NanoPi R2C 定制的极速编译脚本
+# Description: 专门为 NanoPi R2C 定制的极速编译脚本 (稳定修正版)
 #
 
 name: 仅编译 R2C 专属依赖
 
 on:
-  workflow_dispatch: # 支持手动点击 Run workflow 触发
+  workflow_dispatch: # 支持手动触发
 
 env:
   TZ: Asia/Shanghai
@@ -14,14 +14,13 @@ env:
 
 jobs:
   job_auto_compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # 【关键修正】锁定稳定版编译环境，避免 24.04 丢包问题
     name: 正在编译 R2C (aarch64_generic)
     
     strategy:
       fail-fast: false
       matrix:
         include:
-          # 只保留 R2C 对应的 aarch64_generic 架构
           - platform: aarch64_generic
             url_sdk: https://downloads.openwrt.org/releases/24.10.5/targets/rockchip/armv8/openwrt-sdk-24.10.5-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
             sdk_ver: "24.10"
@@ -30,10 +29,18 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@main
 
-    - name: 初始化编译环境
+    - name: 初始化编译环境 (全量稳定版)
       run: |
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install build-essential ccache gawk gettext git libncurses5-dev libssl-dev python3 python3-distutils rsync unzip zlib1g-dev swig tar zstd
+        # 【关键修正】恢复官方原版全量编译工具，彻底杜绝缺少依赖包的报错
+        sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+          bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
+          g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
+          libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+          libreadline-dev libssl-dev libtool libyaml-dev libz-dev lld llvm lrzsz mkisofs msmtp nano \
+          ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+          python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
+          upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
 
@@ -59,7 +66,7 @@ jobs:
         echo "CONFIG_ALL_NONSHARED=n" > .config
         make defconfig
 
-    - name: 🎯 强制精准编译缺失的 3 个依赖包
+    - name: 🎯 强制精准编译缺失的依赖包
       run: |
         cd sdk
         echo "正在为您编译 chinadns-ng, dns2socks, tcping..."
