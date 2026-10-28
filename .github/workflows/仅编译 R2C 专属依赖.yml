@@ -62,6 +62,7 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         echo "CONFIG_ALL_NONSHARED=n" > .config
+        echo "CONFIG_PACKAGE_ipt2socks=m" >> .config
         make defconfig
     - name: 🎯 强制精准编译缺失的依赖包
       run: |
@@ -70,6 +71,7 @@ jobs:
         make package/feeds/passwall_packages/chinadns-ng/compile -j$(nproc) V=s || true
         make package/feeds/passwall_packages/dns2socks/compile -j$(nproc) V=s || true
         make package/feeds/passwall_packages/tcping/compile -j$(nproc) V=s || true
+        make package/feeds/passwall_packages/ipt2socks/compile -j$(nproc) V=s || true
     - name: 📦 打包并上传战利品
       uses: actions/upload-artifact@v4
       with:
